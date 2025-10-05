@@ -2,9 +2,12 @@ import subprocess
 import sys
 import platform
 
-def install(package):
-    print(f"[INFO] Installing: {package}")
-    subprocess.check_call([sys.executable, "-m", "pip", "install"] + package.split())
+def install_packages(packages):
+    """Instala una lista de paquetes"""
+    if isinstance(packages, str):
+        packages = [packages]
+    print(f"[INFO] Installing: {packages}")
+    subprocess.check_call([sys.executable, "-m", "pip", "install"] + packages)
 
 def has_nvidia_gpu():
     try:
@@ -22,30 +25,53 @@ def main():
     gpu_detected = has_nvidia_gpu()
     print(f"[INFO] NVIDIA GPU detected: {gpu_detected}")
 
-    # Install PyTorch
+    # Install PyTorch - VERSIÓN CORREGIDA
     if gpu_detected:
-        print("[INFO] Installing PyTorch with CUDA support...")
-        install("--index-url https://download.pytorch.org/whl/cu121 torch torchvision")
-        torch_type = "GPU (CUDA 12.1)"
+        print("[INFO] Installing PyTorch with CUDA 11.8 support...")
+        install_packages([
+            "torch", 
+            "torchvision", 
+            "torchaudio",
+            "--index-url", 
+            "https://download.pytorch.org/whl/cu118"
+        ])
+        torch_type = "GPU (CUDA 11.8)"
     else:
         print("[INFO] Installing PyTorch for CPU...")
-        install("--index-url https://download.pytorch.org/whl/cpu torch torchvision")
+        install_packages([
+            "torch", 
+            "torchvision", 
+            "torchaudio",
+            "--index-url", 
+            "https://download.pytorch.org/whl/cpu"
+        ])
         torch_type = "CPU"
-
 
     print("\n[INFO] Installing additional dependencies...\n")
     dependencies = [
         "opencv-python",
-        "numpy",
+        "numpy", 
         "pillow",
         "ftfy",
-        "regex",
+        "regex", 
         "tqdm",
         "ultralytics",
         "git+https://github.com/openai/CLIP.git"
     ]
+    
     for dep in dependencies:
-        install(dep)
+        install_packages(dep)
+
+    # Verificar que PyTorch se instaló correctamente
+    try:
+        import torch
+        print(f"\n[SUCCESS] PyTorch version: {torch.__version__}")
+        if gpu_detected:
+            print(f"[SUCCESS] CUDA available: {torch.cuda.is_available()}")
+            if torch.cuda.is_available():
+                print(f"[SUCCESS] GPU: {torch.cuda.get_device_name(0)}")
+    except ImportError:
+        print("\n[ERROR] PyTorch no se instaló correctamente")
 
     print("\n[INFO] ===== INSTALLATION SUMMARY =====")
     print(f"[INFO] Operating system: {os_name}")
@@ -56,11 +82,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# ================= ESCENARIOS POSIBLES =================
-# Escenario 1: Equipo sin GPU → PyTorch CPU instalado
-# Escenario 2: Equipo con GPU pero PyTorch CPU instalado inicialmente
-#             → PyTorch CUDA se instalará automáticamente, sobrescribiendo CPU
-# Escenario 3: Equipo con GPU y PyTorch CUDA ya instalado
-#             → Script detecta GPU y confirma instalación CUDA existente, no hay cambios
