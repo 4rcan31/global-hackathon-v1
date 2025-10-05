@@ -200,6 +200,54 @@ def main(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print("Usando device:", device)
 
+    # ==============================================================
+    # CARGAR CLIP
+    # ==============================================================
+
+    # CLIP (Contrastive Language–Image Pretraining)
+    # ----------------------------------------------
+    # clip.load(model_name, device) carga un modelo preentrenado de CLIP.
+    # Devuelve una tupla: (modelo, transformador_preprocesamiento)
+    # - `model`: es el modelo de CLIP (permite obtener embeddings de texto e imagen).
+    # - `preprocess`: es la función de transformación de imágenes compatible con el modelo.
+
+    # Parámetros:
+    #   model_name: nombre del modelo, por ejemplo "ViT-B/32".
+    #   device: "cpu" o "cuda" (si hay GPU compatible con CUDA).
+    #
+    # Ejemplo:
+    #   model, preprocess = clip.load("ViT-B/32", device=device)
+
+    # Modelos disponibles y diferencias:
+    # ----------------------------------
+    # 1. ViT-B/32
+    #     - Base (más ligero y rápido)
+    #     - Resolución: 224x224
+    #     -  Visual Transformer con patch size de 32
+    #     - Recomendado para CPU o GPU modesta (poca VRAM)
+    #
+    # 2. ViT-B/16
+    #     - Misma arquitectura base pero con patch size más pequeño (16)
+    #     - Más precisión en los embeddings (mejor calidad)
+    #     - Requiere más VRAM (~2x ViT-B/32)
+    #
+    # 3. ViT-L/14
+    #     - Modelo Large, mucho más preciso
+    #     - Recomendado solo si tienes GPU con >6GB VRAM
+    #
+    # 4. ViT-L/14@336px
+    #     - Versión de mayor resolución (336x336)
+    #     - Aún más exacta para detalles finos
+    #     - Requiere bastante VRAM (>8GB)
+    #
+    # 5. RN50 / RN101 / RN50x4 / RN50x16 / RN50x64
+    #     - Basados en ResNet (no Vision Transformer)
+    #     - Menos eficientes que los ViT en tareas semánticas
+    #     - Útiles si quieres compatibilidad más amplia o si el entorno no soporta ViT
+
+    #  Nota: Para cada uno se necesita una descarga diferente
+
+    model, preprocess = clip.load("ViT-B/32", device=device)
     model, preprocess = clip.load("ViT-B/32", device=device)
 
     # Cargar objetos
@@ -217,6 +265,43 @@ def main(args):
     if cap is None:
         return
 
+    # ==============================================================
+    # CARGAR YOLO
+    # ==============================================================
+
+    # YOLOv8 (Ultralytics)
+    # ----------------------------------------------
+    # Carga un modelo de detección de objetos preentrenado.
+    # La clase YOLO permite:
+    #   - Detectar objetos
+    #   - Entrenar nuevos modelos
+    #   - Exportar modelos a otros formatos (ONNX, TensorRT, etc.)
+    #
+    # Ejemplo:
+    #   yolo_model = YOLO("yolov8n.pt")
+
+    # Modelos disponibles y diferencias:
+    # ----------------------------------
+    # Los sufijos representan el tamaño del modelo:
+    #   n  = nano     (más rápido, menos preciso)
+    #   s  = small    (rápido, buena precisión)
+    #   m  = medium   (equilibrado)
+    #   l  = large    (más preciso, más pesado)
+    #   x  = xlarge   (máxima precisión, mucho consumo)
+    #
+    # Detalle de cada modelo (YOLOv8):
+    # 1. yolov8n.pt  →  3-4 MB  |  velocidad máxima  |  baja precisión
+    # 2. yolov8s.pt  →  ~10 MB  |  muy rápido        |  buena precisión
+    # 3. yolov8m.pt  →  ~25 MB  |  balanceado        |  precisión media-alta
+    # 4. yolov8l.pt  →  ~45 MB  |  más lento         |  alta precisión
+    # 5. yolov8x.pt  →  ~90 MB  |  muy lento         |  máxima precisión
+    #
+    # Requisitos estimados:
+    # - n/s → puede correr en CPU o GPU de gama baja (2GB VRAM)
+    # - m/l/x → se recomienda GPU NVIDIA >= 4GB VRAM
+    #
+    #  Camara en tiempo real, (empezar) yolov8n o yolov8s.
+    #  Para procesamiento por lotes o imágenes de alta resolución, usa m o l.
     yolo_model = YOLO("yolov8n.pt")
     yolo_model.overrides['verbose'] = False
 
