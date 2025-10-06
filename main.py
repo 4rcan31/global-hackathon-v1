@@ -248,7 +248,6 @@ def main(args):
     #  Nota: Para cada uno se necesita una descarga diferente
 
     model, preprocess = clip.load("ViT-B/32", device=device)
-    model, preprocess = clip.load("ViT-B/32", device=device)
 
     # Cargar objetos
     objects_folder = args.objects_folder
